@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <algorithm>
 #include <sstream> // No additional includes or STL allowed!
 using namespace std;
 
@@ -51,7 +52,7 @@ void writeData(string raw[ARSIZE][COLMAX])
 void readArray(string raw[ARSIZE][COLMAX])
 {
     string str = "";
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 1; i++)
     {
         for (int j = 0; j < 10; j++)
         {
@@ -78,7 +79,7 @@ int getColNum(string q, string raw[ARSIZE][COLMAX])
     int count = 0;
     for (int i = 0; i < COLMAX; i++)
     {
-        if (raw[0][i] == q)
+        if (lower(raw[0][i]) == q)
         {
             return count;
         }
@@ -90,18 +91,17 @@ int getColNum(string q, string raw[ARSIZE][COLMAX])
 bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 {
     int i = 0;
-    string line;
+
     string partLine;
     stringstream ssv(q);
-    ssv.ignore(2, '\"');
-    ssv.ignore(1, ',');
     ssv >> partLine;
+    cout << partLine << endl;
     if (partLine != "select")
     {
         return 1;
     }
     ssv >> partLine;
-
+    partLine.erase(std::remove(partLine.begin(), partLine.end(), '\"'), partLine.end());
     if (getColNum(partLine, db) == 1 || partLine != "*")
     {
         return 1;
@@ -117,23 +117,27 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         return 1;
     }
     ssv >> partLine;
-    cout << "nice";
-    return true;
+    if (partLine != "where")
+    {
+        return 1;
+    }
+    if (partLine != ";")
+    {
+        return 1;
+    }
+    return 0;
 }
-
 int main()
 {
     string rawData[ARSIZE][COLMAX];
     readData(rawData);
     writeData(rawData);
     string query = "";
-    query = "SELECT \"Users\" FROM DB";
+    query = "SELECT \"users\" from db;";
+    cout << getColNum("Users", rawData) << endl;
 
-    cout << checkSyntax(query, rawData) << endl;
+    // cout << checkSyntax(lower(query), rawData) << endl;
 
     // readArray(rawData);
     // string query = "";
-    // query = "SELECT \"Users\" FROM DB;";
-    // cout << lower(query) << endl;
-    // cout << tolower(';') << endl;
 }
