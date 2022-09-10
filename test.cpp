@@ -76,6 +76,7 @@ string lower(string str)
 
 int getColNum(string q, string raw[ARSIZE][COLMAX])
 {
+    q = lower(q);
     int count = 0;
     for (int i = 0; i < COLMAX; i++)
     {
@@ -85,48 +86,92 @@ int getColNum(string q, string raw[ARSIZE][COLMAX])
         }
         count++;
     }
+    return -1;
+}
+
+bool checkSynCol(string q, string db[ARSIZE][COLMAX])
+{
+    if (getColNum(q, db) > -1)
+    {
+        return 0;
+    }
     return 1;
 }
 
 bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 {
     int i = 0;
-
     string partLine;
     stringstream ssv(q);
     ssv >> partLine;
-    cout << partLine << endl;
     if (partLine != "select")
     {
         return 1;
     }
+
     ssv >> partLine;
-    partLine.erase(std::remove(partLine.begin(), partLine.end(), '\"'), partLine.end());
-    if (getColNum(partLine, db) == 1 || partLine != "*")
+    if (partLine != "*")
     {
-        return 1;
+        stringstream ssv(q);
+        ssv >> partLine;
+
+        cout << "\'" << partLine << "\'" << '\n';
+
+        getline(ssv, partLine, '\"');
+        getline(ssv, partLine, '\"');
+        if (checkSynCol(partLine, db) == 1)
+        {
+            return 1;
+        }
+
+        cout << "\'" << partLine << "\'" << '\n';
+        ssv >> partLine;
+        // runs if the first col is right
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (partLine == ",")
+            {
+                getline(ssv, partLine, '\"');
+                getline(ssv, partLine, '\"');
+                if (checkSynCol(partLine, db) == 1)
+                {
+                    return 1;
+                }
+                ssv >> partLine;
+            }
+        }
+        // checks last col to see if extra comma
+        if (partLine == ",")
+        {
+            return 1;
+            cout << "no extra comma at end";
+        }
     }
-    ssv >> partLine;
+
     if (partLine != "from")
     {
         return 1;
     }
+
     ssv >> partLine;
-    if (partLine != "db")
+    if (partLine != "db" && partLine != "db;")
     {
         return 1;
     }
+    if (partLine.back() == ';')
+    {
+        return 0;
+    }
+
     ssv >> partLine;
-    if (partLine != "where")
-    {
-        return 1;
-    }
-    if (partLine != ";")
-    {
-        return 1;
-    }
+
+    cout << "\"" << partLine << "\"" << '\n';
+
+    cout << "return fake zero :";
     return 0;
 }
+
 int main()
 {
     string rawData[ARSIZE][COLMAX];
@@ -134,9 +179,8 @@ int main()
     writeData(rawData);
     string query = "";
     query = "SELECT \"users\" from db;";
-    cout << getColNum("Users", rawData) << endl;
 
-    // cout << checkSyntax(lower(query), rawData) << endl;
+    cout << "Final : " << checkSyntax(lower(query), rawData) << endl;
 
     // readArray(rawData);
     // string query = "";

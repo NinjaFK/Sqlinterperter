@@ -97,24 +97,6 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         return 1;
     }
     ssv >> partLine;
-    if (partLine != "from")
-    {
-        return 1;
-    }
-    ssv >> partLine;
-    if (partLine != "db")
-    {
-        return 1;
-    }
-    ssv >> partLine;
-    if (partLine != "where")
-    {
-        return 1;
-    }
-    if (partLine != ";")
-    {
-        return 1;
-    }
     return 0;
 }
 // q for query so we keep lines short
