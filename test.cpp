@@ -115,17 +115,14 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         stringstream ssv(q);
         ssv >> partLine;
 
-        cout << "\'" << partLine << "\'" << '\n';
-
         getline(ssv, partLine, '\"');
         getline(ssv, partLine, '\"');
         if (checkSynCol(partLine, db) == 1)
         {
             return 1;
         }
-
-        cout << "\'" << partLine << "\'" << '\n';
         ssv >> partLine;
+
         // runs if the first col is right
 
         for (int i = 0; i < 4; i++)
@@ -149,6 +146,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         }
     }
 
+    ssv >> partLine;
     if (partLine != "from")
     {
         return 1;
@@ -166,7 +164,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 
     ssv >> partLine;
 
-    cout << "\"" << partLine << "\"" << '\n';
+    // cout << "\"" << partLine << "\"" << '\n';
 
     cout << "return fake zero :";
     return 0;
@@ -178,7 +176,7 @@ int main()
     readData(rawData);
     writeData(rawData);
     string query = "";
-    query = "SELECT \"users\" from db;";
+    query = "SELECT \"users\", \"users\" from db;";
 
     cout << "Final : " << checkSyntax(lower(query), rawData) << endl;
 
