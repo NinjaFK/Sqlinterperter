@@ -184,8 +184,25 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 
 // Fills struct in with all the query data, neatly organized.
 // could have done this when checking syntax, but meh
-void parseQuerytoStruct(Query q, string query);
+void parseQuerytoStruct(Query q, string query, string raw[ARSIZE][COLMAX])
 {
+    int numOfCol = 0;
+
+    for (int i = 0; i < 37; i++)
+    {
+        if (query.find('*') != string::npos)
+        {
+            q.colList[i] = raw[0][i];
+        }
+        else
+        {
+            if (query.find(lower(raw[0][i])) != string::npos)
+            {
+                q.colList[numOfCol] = raw[0][i];
+                numOfCol++;
+            }
+        }
+    }
 }
 
 int main()
@@ -196,7 +213,10 @@ int main()
     string query = "";
     query = "SELECT \"users\", \"users\" from db;";
 
-    cout << "Final : " << checkSyntax(lower(query), rawData) << endl;
+    Query q;
+    parseQuerytoStruct(q, query, rawData);
+
+    //    cout << "Final : " << checkSyntax(lower(query), rawData) << endl;
 
     // readArray(rawData);
     // string query = "";
