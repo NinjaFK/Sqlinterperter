@@ -80,31 +80,114 @@ string lower(string str)
 // as soon as error is detected.
 bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 {
-    int i = 0;
-    string line;
-    string partLine;
-    stringstream ssv;
-    ssv.ignore(2, '"');
-    ssv.ignore(1, ',');
-    ssv >> partLine;
-    if (partLine != "select")
+    int j = 0;
+    string temp = "";
+    if (q.substr(0, 6) != "select")
     {
         return 1;
     }
-    ssv >> partLine;
-    if (getColNum(partLine, db) == 1 || partLine != "*")
+    q.erase(0, 7);
+
+    if (q[0] != '*')
+    {
+        for (int i = 0; i < 36; i++)
+        {
+            if (q.find(',') != string::npos)
+            {
+                if (getColNum(q.substr(1, q.find("\",") - 1), db) == -1)
+                {
+                    return 1;
+                }
+                q.erase(0, q.find(" \"") + 1);
+            }
+        }
+        if (getColNum(q.substr(1, q.find("\" ") - 1), db) == -1)
+        {
+            return 1;
+        }
+        q.erase(0, q.find("\" "));
+    }
+    if (q.substr(2, 4) != "from")
     {
         return 1;
     }
-    ssv >> partLine;
-    return 0;
+    q.erase(0, 6);
+    if (q.substr(1, q.length()) == "db;")
+    {
+        return 0;
+    }
+    if (q.substr(1, 2) != "db")
+    {
+        return 1;
+    }
+    q.erase(0, 3);
+    if (q.substr(1, 5) != "where")
+    {
+        return 1;
+    }
+    q.erase(0, 6);
+
+    do
+    {
+        if (getColNum(q.substr(2, q.find("\" ") - 2), db) == -1)
+        {
+            return 1;
+        }
+        q.erase(0, q.find("\" ") + 1);
+        temp = q.substr(1, 2);
+        if (temp != "> " && temp != "> ")
+        {
+            if (temp != "==" && temp != "!=")
+            {
+                if (temp != ">=" && temp != "<=")
+                {
+                    return 1;
+                }
+            }
+        }
+        q.erase(0, q.find(" \""));
+        q.erase(0, 2);
+        if (q.find("and") == string::npos && q.find("or") == string::npos)
+        {
+            break;
+        }
+        q.erase(0, q.find(" \""));
+        j++;
+    } while (j < 4);
+
+    if (q.length() == 0)
+    {
+        return 1;
+    }
+    if (q.back() != ';')
+    {
+        return 1;
+    }
 }
 // q for query so we keep lines short
 
 // Fills struct in with all the query data, neatly organized.
 // could have done this when checking syntax, but meh
-void parseQuerytoStruct(Query q, string query);
+void parseQuerytoStruct(Query q, string query, string db[ARSIZE][COLMAX])
+{
+    int numOfCol = 0;
 
+    for (int i = 0; i < 37; i++)
+    {
+        if (query.find('*') != string::npos)
+        {
+            q.colList[i] = db[0][i];
+        }
+        else
+        {
+            if (query.find(lower(db[0][i])) != string::npos)
+            {
+                q.colList[numOfCol] = db[0][i];
+                numOfCol++;
+            }
+        }
+    }
+}
 // makes our life easier
 int getColNum(string q, string raw[ARSIZE][COLMAX])
 {
