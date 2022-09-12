@@ -105,7 +105,8 @@ int getColNum(string q, string raw[ARSIZE][COLMAX])
 
 bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 {
-    int test = 0;
+    int j = 0;
+    string temp = "";
     if (q.substr(0, 6) != "select")
     {
         return 1;
@@ -114,7 +115,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 
     if (q[0] != '*')
     {
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 36; i++)
         {
             if (q.find(',') != string::npos)
             {
@@ -122,7 +123,6 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
                 {
                     return 1;
                 }
-                test = q.find(" \"");
                 q.erase(0, q.find(" \"") + 1);
             }
         }
@@ -137,11 +137,57 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         return 1;
     }
     q.erase(0, 6);
-    if (q.substr(2, q.length()) == "db;")
+    if (q.substr(1, q.length()) == "db;")
     {
         return 0;
     }
+    if (q.substr(1, 2) != "db")
+    {
+        return 1;
+    }
+    q.erase(0, 3);
+    if (q.substr(1, 5) != "where")
+    {
+        return 1;
+    }
+    q.erase(0, 6);
 
+    do
+    {
+        if (getColNum(q.substr(2, q.find("\" ") - 2), db) == -1)
+        {
+            return 1;
+        }
+        q.erase(0, q.find("\" ") + 1);
+        temp = q.substr(1, 2);
+        if (temp != "> " && temp != "> ")
+        {
+            if (temp != "==" && temp != "!=")
+            {
+                if (temp != ">=" && temp != "<=")
+                {
+                    return 1;
+                }
+            }
+        }
+        q.erase(0, q.find(" \""));
+        q.erase(0, 2);
+        if (q.find("and") == string::npos && q.find("or") == string::npos)
+        {
+            break;
+        }
+        q.erase(0, q.find(" \""));
+        j++;
+    } while (j < 4);
+
+    if (q.length() == 0)
+    {
+        return 1;
+    }
+    if (q.back() != ';')
+    {
+        return 1;
+    }
     return 0;
 }
 
@@ -174,7 +220,7 @@ int main()
     readData(rawData);
     writeData(rawData);
     string query = "";
-    query = "SELECT \"users\", \"purpose\", \"users\" from db;";
+    query = "SELECT \"users\", \"purpose\", \"users\" from db where \"users\" == \"amongus\" and \"users\" == \"amongus\";";
 
     cout << "Final : " << checkSyntax(lower(query), rawData) << endl;
 
