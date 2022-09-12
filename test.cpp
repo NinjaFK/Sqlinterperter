@@ -103,82 +103,45 @@ int getColNum(string q, string raw[ARSIZE][COLMAX])
     return -1;
 }
 
-bool checkSynCol(string q, string db[ARSIZE][COLMAX])
-{
-    if (getColNum(q, db) > -1)
-    {
-        return 0;
-    }
-    return 1;
-}
-
 bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 {
-    int i = 0;
-    string partLine;
-    stringstream ssv(q);
-    ssv >> partLine;
-    if (partLine != "select")
+    int test = 0;
+    if (q.substr(0, 6) != "select")
     {
         return 1;
     }
+    q.erase(0, 7);
 
-    ssv >> partLine;
-    if (q.find('*') != '*')
+    if (q[0] != '*')
     {
-
-        getline(ssv, partLine, '\"');
-        getline(ssv, partLine, '\"');
-        if (checkSynCol(partLine, db) == 1)
-        {
-            return 1;
-        }
-        ssv >> partLine;
-
-        // runs if the first col is right
-
         for (int i = 0; i < 4; i++)
         {
-            if (partLine == ",")
+            if (q.find(',') != string::npos)
             {
-                getline(ssv, partLine, '\"');
-                getline(ssv, partLine, '\"');
-                if (checkSynCol(partLine, db) == 1)
+                if (getColNum(q.substr(1, q.find("\",") - 1), db) == -1)
                 {
                     return 1;
                 }
-                ssv >> partLine;
+                test = q.find(" \"");
+                q.erase(0, q.find(" \"") + 1);
             }
         }
-        // checks last col to see if extra comma
-        if (partLine == ",")
+        if (getColNum(q.substr(1, q.find("\" ") - 1), db) == -1)
         {
             return 1;
-            cout << "no extra comma at end";
         }
+        q.erase(0, q.find("\" "));
     }
-
-    ssv >> partLine;
-    if (partLine != "from")
+    if (q.substr(2, 4) != "from")
     {
         return 1;
     }
-
-    ssv >> partLine;
-    if (partLine != "db" && partLine != "db;")
-    {
-        return 1;
-    }
-    if (partLine.back() == ';')
+    q.erase(0, 6);
+    if (q.substr(2, q.length()) == "db;")
     {
         return 0;
     }
 
-    ssv >> partLine;
-
-    // cout << "\"" << partLine << "\"" << '\n';
-
-    cout << "return fake zero :";
     return 0;
 }
 
@@ -211,12 +174,9 @@ int main()
     readData(rawData);
     writeData(rawData);
     string query = "";
-    query = "SELECT \"users\", \"users\" from db;";
+    query = "SELECT \"users\", \"purpose\", \"users\" from db;";
 
-    Query q;
-    parseQuerytoStruct(q, query, rawData);
-
-    //    cout << "Final : " << checkSyntax(lower(query), rawData) << endl;
+    cout << "Final : " << checkSyntax(lower(query), rawData) << endl;
 
     // readArray(rawData);
     // string query = "";
