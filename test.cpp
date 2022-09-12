@@ -8,6 +8,20 @@ using namespace std;
 #define ARSIZE 5500 // for changing size on the go
 #define COLMAX 37
 
+struct Query
+{
+    int colCount = 0;
+    int whereCount = 0;
+    string colList[COLMAX] = {"", "", "", "", "", "", "", "", "", "",
+                              "", "", "", "", "", "", "", "", "", "",
+                              "", "", "", "", "", "", "", "", "", "",
+                              "", "", "", "", "", "", ""};
+    string whereLeft[5] = {"", "", "", "", ""};
+    string whereRight[5] = {"", "", "", "", ""};
+    string logicList[5] = {"", "", "", "", ""};
+    string ANDORlist[4] = {"", "", "", ""};
+};
+
 void readData(string raw[ARSIZE][COLMAX])
 {
     string line;
@@ -110,10 +124,8 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
     }
 
     ssv >> partLine;
-    if (partLine != "*")
+    if (q.find('*') != '*')
     {
-        stringstream ssv(q);
-        ssv >> partLine;
 
         getline(ssv, partLine, '\"');
         getline(ssv, partLine, '\"');
@@ -168,6 +180,12 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 
     cout << "return fake zero :";
     return 0;
+}
+
+// Fills struct in with all the query data, neatly organized.
+// could have done this when checking syntax, but meh
+void parseQuerytoStruct(Query q, string query);
+{
 }
 
 int main()
