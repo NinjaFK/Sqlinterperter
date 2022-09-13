@@ -92,6 +92,7 @@ string lower(string str)
 int getColNum(string q, string raw[ARSIZE][COLMAX])
 {
     int count = 0;
+    q = lower(q);
     for (int i = 0; i < COLMAX; i++)
     {
         if (lower(raw[0][i]) == q)
@@ -258,20 +259,16 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
     // Note if a col name doesn't match we just error out
     // if your local output array segfaults, make it global like I put above
     int colc = 0;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < q.colCount; i++)
     {
-        for (int j = 0; j < 37; j++)
+        if (getColNum(q.colList[i], db) != -1)
         {
-            if (q.colList[i] == db[0][j])
-            {
-                cout << q.colList[i] << endl;
-                colc++;
-            }
+            colc++;
         }
     }
     if (colc != q.colCount)
     {
-        return 1;
+        return 0;
     }
 
     for (int i = 0; i < colc; i++)
@@ -280,9 +277,16 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
         {
             for (int k = 0; k < COLMAX; k++)
             {
+                if (db[getColNum(q.colList[i], db)][1] == q.whereRight[i])
+                {
+                }
+
+                if (db[getColNum(q.colList[i], db)][j]) == db[getColNum(q.colList[i],db)][q.whereRight[i]])
+                    {
+                    }
                 output[j][k] = db[0][getColNum(q.colList[i], db)];
-                // cout << output[j][k];
             }
+            cout << output[j][1] << endl;
         }
     }
 
@@ -340,12 +344,12 @@ void runQuery(string &query, string db[][COLMAX])
     Query q; // the struct with the data to query
 
     parseQuerytoStruct(q, query, db); // remember to handle separately *
-    printQuery(q);
-    //    now we can actually return the values for it.
-    //  generateResults(q, db);
-    //  if (!generateResults(q, db))
-    //      cout << "Error: Invalid Query Semantic. "
-    //           << "Get motivated. Try Again!" << endl;
+    // printQuery(q);
+    //     now we can actually return the values for it.
+    // generateResults(q, db);
+    if (!generateResults(q, db))
+        cout << "Error: Invalid Query Semantic. "
+             << "Get motivated. Try Again!" << endl;
 }
 
 int main()
