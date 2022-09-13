@@ -119,10 +119,10 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         {
             if (q.find(',') != string::npos)
             {
-                if (getColNum(q.substr(1, q.find("\",") - 1), db) == -1)
-                {
-                    return 1;
-                }
+                // if (getColNum(q.substr(1, q.find("\",") - 1), db) == -1)
+                //{
+                //     return 1;
+                // }
                 q.erase(0, q.find("\",") + 3);
             }
         }
@@ -200,29 +200,27 @@ void parseQuerytoStruct(Query &q, string query, string db[ARSIZE][COLMAX])
     long maxstr = string::npos;
 
     // redo please without db
+
     for (int i = 0; i < 37; i++)
     {
         if (query.find('*') != string::npos)
         {
             q.colList[i] = db[0][i];
+            q.colCount = 37;
         }
-        else
+        else if (query.find(',') != string::npos)
         {
-            if (query.find(db[0][i]) != string::npos)
-            {
-                q.colList[numOfCol] = db[0][i];
-                cout << i << endl;
-                cout << db[0][i] << endl;
-                cout << q.colList[numOfCol] << endl;
-                numOfCol++;
-                q.colCount++;
-            }
+            query.erase(0, query.find(" \"") + 2);
+            q.colList[numOfCol] = query.substr(0, query.find("\""));
+            numOfCol++;
+            q.colCount++;
         }
     }
 
     if (lq.find("where") != maxstr)
     {
         q.whereCount++;
+        lq = lower(query);
         query.erase(0, lq.find("where") + 7);
         for (int i = 0; i < 4; i++)
         {
@@ -231,12 +229,12 @@ void parseQuerytoStruct(Query &q, string query, string db[ARSIZE][COLMAX])
                 q.whereLeft[i] = query.substr(0, query.find("\" "));
                 query.erase(0, query.find("\" ") + 2);
                 q.logicList[i] = query.substr(0, 2);
-                query.erase(0, 4);
+                query.erase(0, query.find("\"") + 1);
                 q.whereRight[i] = query.substr(0, query.find("\""));
                 query.erase(0, query.find("\" ") + 2);
                 q.ANDORlist[i] = query.substr(0, query.find(" "));
                 query.erase(0, query.find("\"") + 1);
-                lq = query;
+                lq = lower(query);
                 j++;
                 q.whereCount++;
             }
@@ -244,7 +242,7 @@ void parseQuerytoStruct(Query &q, string query, string db[ARSIZE][COLMAX])
         q.whereLeft[j] = query.substr(0, query.find("\" "));
         query.erase(0, query.find("\" ") + 2);
         q.logicList[j] = query.substr(0, 2);
-        query.erase(0, 4);
+        query.erase(0, query.find("\"") + 1);
         q.whereRight[j] = query.substr(0, query.find("\""));
         query.erase(0, query.find("\""));
     }
@@ -283,7 +281,7 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
             for (int k = 0; k < COLMAX; k++)
             {
                 output[j][k] = db[0][getColNum(q.colList[i], db)];
-                cout << output[j][k];
+                // cout << output[j][k];
             }
         }
     }
@@ -295,29 +293,31 @@ void printQuery(Query q)
 {
     cout << "colCount: " << q.colCount << endl;
     cout << "whereCount: " << q.whereCount << endl;
+    cout << "-----------" << endl;
     for (int i = 0; i < q.colCount; i++)
     {
         cout << q.colList[i] << endl;
     }
 
-    for (int i = 0; i < 5; i++)
+    cout << "-----------" << endl;
+    for (int i = 0; i < q.whereCount; i++)
     {
-        cout << q.whereLeft[i] << " 000 ";
+        cout << q.whereLeft[i] << endl;
     }
-
-    cout << endl;
-    for (int i = 0; i < 5; i++)
+    cout << "-----------" << endl;
+    for (int i = 0; i < q.whereCount; i++)
     {
-        cout << q.whereRight[i] << " 000 ";
+        cout << q.whereRight[i] << endl;
     }
-    cout << endl;
-    for (int i = 0; i < 5; i++)
+    cout << "-----------" << endl;
+    for (int i = 0; i < q.whereCount; i++)
     {
-        cout << q.logicList[i] << " 000 ";
+        cout << q.logicList[i] << endl;
     }
+    cout << "-----------" << endl;
     for (int i = 0; i < 4; i++)
     {
-        cout << q.ANDORlist[i] << " 000 ";
+        cout << q.ANDORlist[i] << endl;
     }
     cout << endl;
 }
@@ -341,11 +341,11 @@ void runQuery(string &query, string db[][COLMAX])
 
     parseQuerytoStruct(q, query, db); // remember to handle separately *
     printQuery(q);
-    //   now we can actually return the values for it.
-    // generateResults(q, db);
-    // if (!generateResults(q, db))
-    //     cout << "Error: Invalid Query Semantic. "
-    //          << "Get motivated. Try Again!" << endl;
+    //    now we can actually return the values for it.
+    //  generateResults(q, db);
+    //  if (!generateResults(q, db))
+    //      cout << "Error: Invalid Query Semantic. "
+    //           << "Get motivated. Try Again!" << endl;
 }
 
 int main()
@@ -361,8 +361,8 @@ int main()
     ofstream fout;
     fout.open("queryoutput.txt"); // Cleanup
     fout << "Queries:" << endl;
-    fout.close();                                                                                                                               // Cleanup output file
-    query = "SELECT \"Users\", \" Dry Mass (kg.) \", \"Users\" FROM DB WHERE \" Dry Mass (kg.) \" < \"amongus\" and \"Users\" == \"amongus\";"; // Debug
+    fout.close();                                                                                                                                 // Cleanup output file
+    query = "SELECT \"Users\", \"Purpose\", \" Dry Mass (kg.) \" FROM DB WHERE \" Dry Mass (kg.) \" < \"amongus\" and \"Users\" == \"amongus\";"; // Debug
     runQuery(query, rawData);
     return 0; // Debug
     /*
