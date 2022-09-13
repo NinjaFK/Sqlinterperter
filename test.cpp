@@ -174,7 +174,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         {
             break;
         }
-        q.erase(0, q.find(" \""));
+        q.erase(0, q.find(" \"") + 2);
         j++;
     } while (j < 4);
 
@@ -194,6 +194,9 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 void parseQuerytoStruct(Query q, string query, string db[ARSIZE][COLMAX])
 {
     int numOfCol = 0;
+    int j = 0;
+    string lq = lower(query);
+    long maxstr = string::npos;
 
     for (int i = 0; i < 37; i++)
     {
@@ -207,22 +210,37 @@ void parseQuerytoStruct(Query q, string query, string db[ARSIZE][COLMAX])
             {
                 q.colList[numOfCol] = db[0][i];
                 numOfCol++;
+                q.colCount++;
             }
         }
     }
-    // cout << (lower(query)).find("where") << endl;
-    if ((lower(query)).find("where") != string::npos)
+    if (lq.find("where") != maxstr)
     {
-        query.erase(0, (lower(query)).find("where") + 5);
-        cout << '\'' << query << '\'' << endl;
-        query.substr(2, query.find("\" "));
+        q.whereCount++;
+        query.erase(0, lq.find("where") + 7);
         for (int i = 0; i < 4; i++)
         {
-            // if (lower(query).find("and") != string::npos || lower(query).find("or") != string::npos)
-            //{
-            // }
+            if (lq.find("and") != maxstr || lq.find("or") != maxstr)
+            {
+                q.whereLeft[i] = query.substr(0, query.find("\" "));
+                query.erase(0, query.find("\" ") + 2);
+                q.logicList[i] = query.substr(0, 2);
+                query.erase(0, 4);
+                q.whereRight[i] = query.substr(0, query.find("\""));
+                query.erase(0, query.find("\" ") + 2);
+                q.ANDORlist[i] = query.substr(0, query.find(" "));
+                query.erase(0, query.find("\"") + 1);
+                lq = query;
+                j++;
+                q.whereCount++;
+            }
         }
-        // cout << '\'' << query.substr(2, query.find("\" ")) << '\'' << endl;
+        q.whereLeft[j] = query.substr(0, query.find("\" "));
+        query.erase(0, query.find("\" ") + 2);
+        q.logicList[j] = query.substr(0, 2);
+        query.erase(0, 4);
+        q.whereRight[j] = query.substr(0, query.find("\""));
+        query.erase(0, query.find("\""));
     }
 }
 
@@ -272,8 +290,8 @@ int main()
     ofstream fout;
     fout.open("queryoutput.txt"); // Cleanup
     fout << "Queries:" << endl;
-    fout.close();                                                                                                   // Cleanup output file
-    query = "SELECT \"Users\", \" Dry Mass (kg.) \", \"Users\" FROM DB WHERE \" Dry Mass (kg.) \" == \"amongus\";"; // Debug
+    fout.close();                                                                                                                                // Cleanup output file
+    query = "SELECT \"Users\", \" Dry Mass (kg.) \", \"Users\" FROM DB WHERE \" Dry Mass (kg.) \" == \"amongus\" and \"Users\" == \"amongus\";"; // Debug
     runQuery(query, rawData);
     return 0; // Debug
     /*
