@@ -75,6 +75,21 @@ string lower(string str)
     return str;
 }
 
+// makes our life easier
+int getColNum(string q, string raw[ARSIZE][COLMAX])
+{
+    int count = 0;
+    for (int i = 0; i < COLMAX; i++)
+    {
+        if (raw[0][i] == q)
+        {
+            return count;
+        }
+        count++;
+    }
+    return 1;
+}
+
 // Checks the syntax of the query, returns 1 if error, 0 if gucci
 // has already been lower case so can check easier. will return
 // as soon as error is detected.
@@ -98,14 +113,14 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
                 {
                     return 1;
                 }
-                q.erase(0, q.find(" \"") + 1);
+                q.erase(0, q.find("\",") + 3);
             }
         }
-        if (getColNum(q.substr(1, q.find("\" ") - 1), db) == -1)
+        if (getColNum(q.substr(1, q.find("\" f") - 1), db) == -1)
         {
             return 1;
         }
-        q.erase(0, q.find("\" "));
+        q.erase(0, q.find("\" f"));
     }
     if (q.substr(2, 4) != "from")
     {
@@ -125,11 +140,11 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
     {
         return 1;
     }
-    q.erase(0, 6);
+    q.erase(0, 8);
 
     do
     {
-        if (getColNum(q.substr(2, q.find("\" ") - 2), db) == -1)
+        if (getColNum(q.substr(0, q.find("\" ")), db) == -1)
         {
             return 1;
         }
@@ -145,8 +160,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
                 }
             }
         }
-        q.erase(0, q.find(" \""));
-        q.erase(0, 2);
+        q.erase(0, q.find(" \"") + 2);
         if (q.find("and") == string::npos && q.find("or") == string::npos)
         {
             break;
@@ -163,6 +177,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
     {
         return 1;
     }
+    return 0;
 }
 // q for query so we keep lines short
 
@@ -180,27 +195,27 @@ void parseQuerytoStruct(Query q, string query, string db[ARSIZE][COLMAX])
         }
         else
         {
-            if (query.find(lower(db[0][i])) != string::npos)
+            if (query.find(db[0][i]) != string::npos)
             {
                 q.colList[numOfCol] = db[0][i];
                 numOfCol++;
             }
         }
     }
-}
-// makes our life easier
-int getColNum(string q, string raw[ARSIZE][COLMAX])
-{
-    int count = 0;
-    for (int i = 0; i < COLMAX; i++)
+    // cout << (lower(query)).find("where") << endl;
+    if ((lower(query)).find("where") != string::npos)
     {
-        if (raw[0][i] == q)
+        query.erase(0, (lower(query)).find("where") + 5);
+        cout << '\'' << query << '\'' << endl;
+        query.substr(2, query.find("\" "));
+        for (int i = 0; i < 4; i++)
         {
-            return count;
+            // if (lower(query).find("and") != string::npos || lower(query).find("or") != string::npos)
+            //{
+            // }
         }
-        count++;
+        // cout << '\'' << query.substr(2, query.find("\" ")) << '\'' << endl;
     }
-    return 1;
 }
 
 string output[ARSIZE][COLMAX];
@@ -229,7 +244,7 @@ void runQuery(string &query, string db[][COLMAX])
     // ok now that we know query is ok we can parse and prepare
     Query q; // the struct with the data to query
 
-    parseQuerytoStruct(q, query); // remember to handle separately *
+    parseQuerytoStruct(q, query, db); // remember to handle separately *
     // now we can actually return the values for it.
     if (!generateResults(q, db))
         cout << "Error: Invalid Query Semantic. "

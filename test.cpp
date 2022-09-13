@@ -191,7 +191,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 
 // Fills struct in with all the query data, neatly organized.
 // could have done this when checking syntax, but meh
-void parseQuerytoStruct(Query q, string query, string raw[ARSIZE][COLMAX])
+void parseQuerytoStruct(Query q, string query, string db[ARSIZE][COLMAX])
 {
     int numOfCol = 0;
 
@@ -199,13 +199,13 @@ void parseQuerytoStruct(Query q, string query, string raw[ARSIZE][COLMAX])
     {
         if (query.find('*') != string::npos)
         {
-            q.colList[i] = raw[0][i];
+            q.colList[i] = db[0][i];
         }
         else
         {
-            if (query.find(raw[0][i]) != string::npos)
+            if (query.find(db[0][i]) != string::npos)
             {
-                q.colList[numOfCol] = raw[0][i];
+                q.colList[numOfCol] = db[0][i];
                 numOfCol++;
             }
         }
