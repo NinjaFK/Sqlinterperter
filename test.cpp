@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include <algorithm>
 #include <sstream> // No additional includes or STL allowed!
 using namespace std;
 
@@ -118,7 +117,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
     {
         for (int i = 0; i < 36; i++)
         {
-            if (q.find(',') != string::npos)
+            if (q.find("\",") != string::npos)
             {
                 // if (getColNum(q.substr(1, q.find("\",") - 1), db) == -1)
                 //{
@@ -131,27 +130,27 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         {
             return 1;
         }
-        q.erase(0, q.find("\" f"));
+        q.erase(0, q.find("\" f") + 2);
     }
-    if (q.substr(2, 4) != "from")
+    if (q.substr(0, 4) != "from")
     {
         return 1;
     }
-    q.erase(0, 6);
-    if (q.substr(1, q.length()) == "db;")
+    q.erase(0, 5);
+    if (q.substr(0, q.length()) == "db;")
     {
         return 0;
     }
-    if (q.substr(1, 2) != "db")
+    if (q.substr(0, 2) != "db")
     {
         return 1;
     }
     q.erase(0, 3);
-    if (q.substr(1, 5) != "where")
+    if (q.substr(0, 5) != "where")
     {
         return 1;
     }
-    q.erase(0, 8);
+    q.erase(0, 7);
 
     do
     {
@@ -202,6 +201,8 @@ void parseQuerytoStruct(Query &q, string query, string db[ARSIZE][COLMAX])
 
     // redo please without db
 
+    query.erase(0, 8);
+
     for (int i = 0; i < 37; i++)
     {
         if (query.find('*') != string::npos)
@@ -209,14 +210,17 @@ void parseQuerytoStruct(Query &q, string query, string db[ARSIZE][COLMAX])
             q.colList[i] = db[0][i];
             q.colCount = 37;
         }
-        else if (query.find(',') != string::npos)
+        if (query.find(", \"") != string::npos)
         {
-            query.erase(0, query.find(" \"") + 2);
-            q.colList[numOfCol] = query.substr(0, query.find("\""));
+            q.colList[numOfCol] = query.substr(0, query.find("\","));
+            query.erase(0, query.find("\",") + 4);
             numOfCol++;
             q.colCount++;
         }
     }
+    q.colList[numOfCol] = query.substr(0, query.find("\""));
+    query.erase(0, query.find("\" f") + 2);
+    q.colCount++;
 
     if (lq.find("where") != maxstr)
     {
@@ -258,7 +262,10 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
     // all of them out.
     // Note if a col name doesn't match we just error out
     // if your local output array segfaults, make it global like I put above
+    // output[j][k] = db[0][getColNum(q.colList[i], db)];
     int colc = 0;
+    int relyOp = 0;
+    bool p;
     for (int i = 0; i < q.colCount; i++)
     {
         if (getColNum(q.colList[i], db) != -1)
@@ -273,20 +280,62 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
 
     for (int i = 0; i < colc; i++)
     {
-        for (int j = 0; j < ARSIZE; i++)
+        for (int j = 0; j < ARSIZE; j++)
         {
-            for (int k = 0; k < COLMAX; k++)
-            {
-                if (db[getColNum(q.colList[i], db)][1] == q.whereRight[i])
-                {
-                }
 
-                if (db[getColNum(q.colList[i], db)][j]) == db[getColNum(q.colList[i],db)][q.whereRight[i]])
-                    {
-                    }
-                output[j][k] = db[0][getColNum(q.colList[i], db)];
+            if (q.logicList[relyOp] == "> ")
+            {
+                if (db[j][getColNum(q.whereLeft[i], db)] > q.whereRight[i])
+                {
+                    p = true;
+                }
             }
+            if (q.logicList[relyOp] == "< ")
+            {
+                if (db[j][getColNum(q.whereLeft[i], db)] < q.whereRight[i])
+                {
+                    p = true;
+                }
+            }
+            if (q.logicList[relyOp] == "==")
+            {
+                if (db[j][getColNum(q.whereLeft[i], db)] == q.whereRight[i])
+                {
+                    p = true;
+                    cout << "yoooooo" << endl;
+                }
+            }
+            if (q.logicList[relyOp] == "!=")
+            {
+                if (db[j][getColNum(q.whereLeft[i], db)] != q.whereRight[i])
+                {
+                    p = true;
+                }
+            }
+            if (q.logicList[relyOp] == ">=")
+            {
+                if (db[j][getColNum(q.whereLeft[i], db)] >= q.whereRight[i])
+                {
+                    p = true;
+                }
+            }
+            if (q.logicList[relyOp] == "<=")
+            {
+                if (db[j][getColNum(q.whereLeft[i], db)] <= q.whereRight[i])
+                {
+                    p = true;
+                }
+            }
+
+            /*
+            cout << "i: " << i << endl;
+            cout << "j: " << j << endl;
+            cout << q.colList[i] << endl;
+            cout << getColNum(q.whereLeft[i], db) << endl;
+            cout << db[j][getColNum(q.whereLeft[i], db)] << endl;
+            cout << q.whereRight[i] << endl;
             cout << output[j][1] << endl;
+            */
         }
     }
 
@@ -344,9 +393,9 @@ void runQuery(string &query, string db[][COLMAX])
     Query q; // the struct with the data to query
 
     parseQuerytoStruct(q, query, db); // remember to handle separately *
-    // printQuery(q);
-    //     now we can actually return the values for it.
-    // generateResults(q, db);
+                                      // printQuery(q);
+    //      now we can actually return the values for it.
+    //  generateResults(q, db);
     if (!generateResults(q, db))
         cout << "Error: Invalid Query Semantic. "
              << "Get motivated. Try Again!" << endl;
@@ -365,8 +414,8 @@ int main()
     ofstream fout;
     fout.open("queryoutput.txt"); // Cleanup
     fout << "Queries:" << endl;
-    fout.close();                                                                                                                                 // Cleanup output file
-    query = "SELECT \"Users\", \"Purpose\", \" Dry Mass (kg.) \" FROM DB WHERE \" Dry Mass (kg.) \" < \"amongus\" and \"Users\" == \"amongus\";"; // Debug
+    fout.close();                                                                                                 // Cleanup output file
+    query = "SELECT \"\"Name of Satellite, Alternate Names\"\", \"Users\" FROM DB WHERE \"Users\" == \"Civil\";"; // Debug
     runQuery(query, rawData);
     return 0; // Debug
     /*
