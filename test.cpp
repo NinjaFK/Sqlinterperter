@@ -49,6 +49,7 @@ void readData(string raw[ARSIZE][COLMAX])
 // writes to output.txt
 void writeData(string raw[ARSIZE][COLMAX])
 {
+    // create output.txt and add all strings from input array
     ofstream infile("output.txt");
     string str = "";
     for (int i = 0; i < ARSIZE; i++)
@@ -56,9 +57,9 @@ void writeData(string raw[ARSIZE][COLMAX])
         for (int j = 0; j < COLMAX; j++)
         {
             str = raw[i][j];
-            infile << str << " ";
+            infile << str << "*Z*";
         }
-        infile << endl;
+        infile << "*N*";
     }
     infile.close();
 }
@@ -159,7 +160,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         }
         q.erase(0, q.find("\" ") + 1);
         temp = q.substr(1, 2);
-        if (temp != "> " && temp != "> ")
+        if (temp != "> " && temp != "< ")
         {
             if (temp != "==" && temp != "!=")
             {
@@ -191,13 +192,14 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 
 // Fills struct in with all the query data, neatly organized.
 // could have done this when checking syntax, but meh
-void parseQuerytoStruct(Query q, string query, string db[ARSIZE][COLMAX])
+void parseQuerytoStruct(Query &q, string query, string db[ARSIZE][COLMAX])
 {
     int numOfCol = 0;
     int j = 0;
     string lq = lower(query);
     long maxstr = string::npos;
 
+    // redo please without db
     for (int i = 0; i < 37; i++)
     {
         if (query.find('*') != string::npos)
@@ -209,11 +211,15 @@ void parseQuerytoStruct(Query q, string query, string db[ARSIZE][COLMAX])
             if (query.find(db[0][i]) != string::npos)
             {
                 q.colList[numOfCol] = db[0][i];
+                cout << i << endl;
+                cout << db[0][i] << endl;
+                cout << q.colList[numOfCol] << endl;
                 numOfCol++;
                 q.colCount++;
             }
         }
     }
+
     if (lq.find("where") != maxstr)
     {
         q.whereCount++;
@@ -246,12 +252,75 @@ void parseQuerytoStruct(Query q, string query, string db[ARSIZE][COLMAX])
 
 string output[ARSIZE][COLMAX];
 // Creates output with results
-bool generateResults(Query q, string raw[ARSIZE][COLMAX]);
-// First we find the matching rows then we print out
-// only the rows selected, unless colList is 0 then we print
-// all of them out.
-// Note if a col name doesn't match we just error out
-// if your local output array segfaults, make it global like I put above
+bool generateResults(Query q, string db[ARSIZE][COLMAX])
+{
+    // First we find the matching rows then we print out
+    // only the rows selected, unless colList is 0 then we print
+    // all of them out.
+    // Note if a col name doesn't match we just error out
+    // if your local output array segfaults, make it global like I put above
+    int colc = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 37; j++)
+        {
+            if (q.colList[i] == db[0][j])
+            {
+                cout << q.colList[i] << endl;
+                colc++;
+            }
+        }
+    }
+    if (colc != q.colCount)
+    {
+        return 1;
+    }
+
+    for (int i = 0; i < colc; i++)
+    {
+        for (int j = 0; j < ARSIZE; i++)
+        {
+            for (int k = 0; k < COLMAX; k++)
+            {
+                output[j][k] = db[0][getColNum(q.colList[i], db)];
+                cout << output[j][k];
+            }
+        }
+    }
+
+    return 0;
+}
+
+void printQuery(Query q)
+{
+    cout << "colCount: " << q.colCount << endl;
+    cout << "whereCount: " << q.whereCount << endl;
+    for (int i = 0; i < q.colCount; i++)
+    {
+        cout << q.colList[i] << endl;
+    }
+
+    for (int i = 0; i < 5; i++)
+    {
+        cout << q.whereLeft[i] << " 000 ";
+    }
+
+    cout << endl;
+    for (int i = 0; i < 5; i++)
+    {
+        cout << q.whereRight[i] << " 000 ";
+    }
+    cout << endl;
+    for (int i = 0; i < 5; i++)
+    {
+        cout << q.logicList[i] << " 000 ";
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        cout << q.ANDORlist[i] << " 000 ";
+    }
+    cout << endl;
+}
 
 void runQuery(string &query, string db[][COLMAX])
 {
@@ -271,10 +340,12 @@ void runQuery(string &query, string db[][COLMAX])
     Query q; // the struct with the data to query
 
     parseQuerytoStruct(q, query, db); // remember to handle separately *
-    // now we can actually return the values for it.
+    printQuery(q);
+    //   now we can actually return the values for it.
+    // generateResults(q, db);
     // if (!generateResults(q, db))
-    //    cout << "Error: Invalid Query Semantic. "
-    //         << "Get motivated. Try Again!" << endl;
+    //     cout << "Error: Invalid Query Semantic. "
+    //          << "Get motivated. Try Again!" << endl;
 }
 
 int main()
@@ -290,8 +361,8 @@ int main()
     ofstream fout;
     fout.open("queryoutput.txt"); // Cleanup
     fout << "Queries:" << endl;
-    fout.close();                                                                                                                                // Cleanup output file
-    query = "SELECT \"Users\", \" Dry Mass (kg.) \", \"Users\" FROM DB WHERE \" Dry Mass (kg.) \" == \"amongus\" and \"Users\" == \"amongus\";"; // Debug
+    fout.close();                                                                                                                               // Cleanup output file
+    query = "SELECT \"Users\", \" Dry Mass (kg.) \", \"Users\" FROM DB WHERE \" Dry Mass (kg.) \" < \"amongus\" and \"Users\" == \"amongus\";"; // Debug
     runQuery(query, rawData);
     return 0; // Debug
     /*
