@@ -90,7 +90,6 @@ string lower(string str)
 
 int getColNum(string q, string raw[ARSIZE][COLMAX])
 {
-    q = lower(q);
     int count = 0;
     for (int i = 0; i < COLMAX; i++)
     {
@@ -123,14 +122,14 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
                 {
                     return 1;
                 }
-                q.erase(0, q.find(" \"") + 1);
+                q.erase(0, q.find("\",") + 3);
             }
         }
-        if (getColNum(q.substr(1, q.find("\" ") - 1), db) == -1)
+        if (getColNum(q.substr(1, q.find("\" f") - 1), db) == -1)
         {
             return 1;
         }
-        q.erase(0, q.find("\" "));
+        q.erase(0, q.find("\" f"));
     }
     if (q.substr(2, 4) != "from")
     {
@@ -150,11 +149,11 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
     {
         return 1;
     }
-    q.erase(0, 6);
+    q.erase(0, 8);
 
     do
     {
-        if (getColNum(q.substr(2, q.find("\" ") - 2), db) == -1)
+        if (getColNum(q.substr(0, q.find("\" ")), db) == -1)
         {
             return 1;
         }
@@ -170,8 +169,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
                 }
             }
         }
-        q.erase(0, q.find(" \""));
-        q.erase(0, 2);
+        q.erase(0, q.find(" \"") + 2);
         if (q.find("and") == string::npos && q.find("or") == string::npos)
         {
             break;
@@ -205,25 +203,88 @@ void parseQuerytoStruct(Query q, string query, string raw[ARSIZE][COLMAX])
         }
         else
         {
-            if (query.find(lower(raw[0][i])) != string::npos)
+            if (query.find(raw[0][i]) != string::npos)
             {
                 q.colList[numOfCol] = raw[0][i];
                 numOfCol++;
             }
         }
     }
+    // cout << (lower(query)).find("where") << endl;
+    if ((lower(query)).find("where") != string::npos)
+    {
+        query.erase(0, (lower(query)).find("where") + 5);
+        cout << '\'' << query << '\'' << endl;
+        query.substr(2, query.find("\" "));
+        for (int i = 0; i < 4; i++)
+        {
+            // if (lower(query).find("and") != string::npos || lower(query).find("or") != string::npos)
+            //{
+            // }
+        }
+        // cout << '\'' << query.substr(2, query.find("\" ")) << '\'' << endl;
+    }
+}
+
+string output[ARSIZE][COLMAX];
+// Creates output with results
+bool generateResults(Query q, string raw[ARSIZE][COLMAX]);
+// First we find the matching rows then we print out
+// only the rows selected, unless colList is 0 then we print
+// all of them out.
+// Note if a col name doesn't match we just error out
+// if your local output array segfaults, make it global like I put above
+
+void runQuery(string &query, string db[][COLMAX])
+{
+    if (lower(query) == "q")
+    {
+        query = "q"; // lowercase it so while in main picks it up
+        return;
+    } // Exit command so we are done here.
+    if (checkSyntax(lower(query), db))
+    { // lowercase version so it's ez
+        cout << "Error: Invalid Query Syntax. "
+             << "Get motivated. Try Again!" << endl;
+        return; // if true there is syntax error
+    }
+
+    // ok now that we know query is ok we can parse and prepare
+    Query q; // the struct with the data to query
+
+    parseQuerytoStruct(q, query, db); // remember to handle separately *
+    // now we can actually return the values for it.
+    // if (!generateResults(q, db))
+    //    cout << "Error: Invalid Query Semantic. "
+    //         << "Get motivated. Try Again!" << endl;
 }
 
 int main()
 {
-    string rawData[ARSIZE][COLMAX];
+    string rawData[ARSIZE][COLMAX]; // first row has col names
     readData(rawData);
-    writeData(rawData);
+    writeData(rawData); // output.txt
+    cout << "Welcome to the Satellite Database at home" << endl;
     string query = "";
-    query = "SELECT \"users\", \"purpose\", \"users\" from db where \"users\" == \"amongus\" and \"users\" == \"amongus\";";
-
-    cout << "Final : " << checkSyntax(lower(query), rawData) << endl;
-
+    for (int i = 0; i < ARSIZE; i++) // Clean up output global array
+        for (int j = 0; j < COLMAX; j++)
+            output[i][j] = "";
+    ofstream fout;
+    fout.open("queryoutput.txt"); // Cleanup
+    fout << "Queries:" << endl;
+    fout.close();                                                                                                   // Cleanup output file
+    query = "SELECT \"Users\", \" Dry Mass (kg.) \", \"Users\" FROM DB WHERE \" Dry Mass (kg.) \" == \"amongus\";"; // Debug
+    runQuery(query, rawData);
+    return 0; // Debug
+    /*
+    while (query != "q")
+    {
+        cout << "Please enter your query:" << endl;
+        getline(cin, query);
+        runQuery(query, rawData); // pass by ref
+    }
+    */
+    return 0;
     // readArray(rawData);
     // string query = "";
 }
