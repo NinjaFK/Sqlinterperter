@@ -29,18 +29,21 @@ void readData(string raw[ARSIZE][COLMAX])
     ifstream infile("UCS-Satellite-Database-5-1-2022.txt");
     getline(infile, line);
     stringstream ss(line);
-    // go through each row's individual elements and add
-    // it to the array, use tab "/t" as the delimiter
+    // Goes through the amount of rows
     for (int i = 0; i < ARSIZE; i++)
     {
+        // Goes through the amount of cols
         for (int j = 0; j < COLMAX; j++)
         {
+            // puts a string into partline then
             getline(ss, partLine, '\t');
             raw[i][j] = partLine;
         }
         getline(infile, line);
         ss.str(line);
     }
+    // go through each row's individual elements and add
+    // it to the array, use tab "/t" as the delimiter
 }
 
 // Opens file output.txt and writes output.
@@ -79,15 +82,16 @@ string lower(string str)
 int getColNum(string q, string raw[ARSIZE][COLMAX])
 {
     int count = 0;
+    q = lower(q);
     for (int i = 0; i < COLMAX; i++)
     {
-        if (raw[0][i] == q)
+        if (lower(raw[0][i]) == q)
         {
             return count;
         }
         count++;
     }
-    return 1;
+    return -1;
 }
 
 // Checks the syntax of the query, returns 1 if error, 0 if gucci
@@ -107,12 +111,12 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
     {
         for (int i = 0; i < 36; i++)
         {
-            if (q.find(',') != string::npos)
+            if (q.find("\",") != string::npos)
             {
-                if (getColNum(q.substr(1, q.find("\",") - 1), db) == -1)
-                {
-                    return 1;
-                }
+                // if (getColNum(q.substr(1, q.find("\",") - 1), db) == -1)
+                //{
+                //     return 1;
+                // }
                 q.erase(0, q.find("\",") + 3);
             }
         }
@@ -120,27 +124,27 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         {
             return 1;
         }
-        q.erase(0, q.find("\" f"));
+        q.erase(0, q.find("\" f") + 2);
     }
-    if (q.substr(2, 4) != "from")
+    if (q.substr(0, 4) != "from")
     {
         return 1;
     }
-    q.erase(0, 6);
-    if (q.substr(1, q.length()) == "db;")
+    q.erase(0, 5);
+    if (q.substr(0, q.length()) == "db;")
     {
         return 0;
     }
-    if (q.substr(1, 2) != "db")
+    if (q.substr(0, 2) != "db")
     {
         return 1;
     }
     q.erase(0, 3);
-    if (q.substr(1, 5) != "where")
+    if (q.substr(0, 5) != "where")
     {
         return 1;
     }
-    q.erase(0, 8);
+    q.erase(0, 7);
 
     do
     {
@@ -150,7 +154,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         }
         q.erase(0, q.find("\" ") + 1);
         temp = q.substr(1, 2);
-        if (temp != "> " && temp != "> ")
+        if (temp != "> " && temp != "< ")
         {
             if (temp != "==" && temp != "!=")
             {
@@ -165,7 +169,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         {
             break;
         }
-        q.erase(0, q.find(" \""));
+        q.erase(0, q.find(" \"") + 2);
         j++;
     } while (j < 4);
 
@@ -183,49 +187,198 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 
 // Fills struct in with all the query data, neatly organized.
 // could have done this when checking syntax, but meh
-void parseQuerytoStruct(Query q, string query, string db[ARSIZE][COLMAX])
+void parseQuerytoStruct(Query &q, string query, string db[ARSIZE][COLMAX])
 {
     int numOfCol = 0;
+    int j = 0;
+    string lq = lower(query);
+    long maxstr = string::npos;
+
+    // redo please without db
+
+    query.erase(0, 8);
 
     for (int i = 0; i < 37; i++)
     {
         if (query.find('*') != string::npos)
         {
             q.colList[i] = db[0][i];
+            q.colCount = 37;
         }
-        else
+        if (query.find(", \"") != string::npos)
         {
-            if (query.find(db[0][i]) != string::npos)
-            {
-                q.colList[numOfCol] = db[0][i];
-                numOfCol++;
-            }
+            q.colList[numOfCol] = query.substr(0, query.find("\","));
+            query.erase(0, query.find("\",") + 4);
+            numOfCol++;
+            q.colCount++;
         }
     }
-    // cout << (lower(query)).find("where") << endl;
-    if ((lower(query)).find("where") != string::npos)
+    q.colList[numOfCol] = query.substr(0, query.find("\""));
+    q.colCount++;
+
+    if (lq.find("where") != maxstr)
     {
-        query.erase(0, (lower(query)).find("where") + 5);
-        cout << '\'' << query << '\'' << endl;
-        query.substr(2, query.find("\" "));
+        q.whereCount++;
+        lq = lower(query);
+        query.erase(0, lq.find("where") + 7);
         for (int i = 0; i < 4; i++)
         {
-            // if (lower(query).find("and") != string::npos || lower(query).find("or") != string::npos)
-            //{
-            // }
+            if (lq.find("\" and \"") != maxstr || lq.find("\" or \"") != maxstr)
+            {
+                q.whereLeft[i] = query.substr(0, query.find("\" "));
+                query.erase(0, query.find("\" ") + 2);
+                q.logicList[i] = query.substr(0, 2);
+                query.erase(0, query.find("\"") + 1);
+                q.whereRight[i] = query.substr(0, query.find("\""));
+                query.erase(0, query.find("\" ") + 2);
+                q.ANDORlist[i] = query.substr(0, query.find(" "));
+                query.erase(0, query.find("\"") + 1);
+                lq = lower(query);
+                j++;
+                q.whereCount++;
+            }
         }
-        // cout << '\'' << query.substr(2, query.find("\" ")) << '\'' << endl;
+        q.whereLeft[j] = query.substr(0, query.find("\" "));
+        query.erase(0, query.find("\" ") + 2);
+        q.logicList[j] = query.substr(0, 2);
+        query.erase(0, query.find("\"") + 1);
+        q.whereRight[j] = query.substr(0, query.find("\""));
+        query.erase(0, query.find("\""));
     }
 }
 
 string output[ARSIZE][COLMAX];
 // Creates output with results
-bool generateResults(Query q, string raw[ARSIZE][COLMAX]);
-// First we find the matching rows then we print out
-// only the rows selected, unless colList is 0 then we print
-// all of them out.
-// Note if a col name doesn't match we just error out
-// if your local output array segfaults, make it global like I put above
+bool generateResults(Query q, string db[ARSIZE][COLMAX])
+{
+    // First we find the matching rows then we print out
+    // only the rows selected, unless colList is 0 then we print
+    // all of them out.
+    // Note if a col name doesn't match we just error out
+    // if your local output array segfaults, make it global like I put above
+    // output[j][k] = db[0][getColNum(q.colList[i], db)];
+    int colc = 0;
+    int relyOp = 0;
+    bool p, p2 = false;
+    int rowcount = 0;
+    for (int i = 0; i < q.colCount; i++)
+    {
+        if (getColNum(q.colList[i], db) != -1)
+        {
+            colc++;
+        }
+    }
+    if (colc != q.colCount)
+    {
+        return 0;
+    }
+
+    for (int i = 0; i < q.colCount; i++)
+    {
+        for (int j = 0; j < ARSIZE; j++)
+        {
+            if (q.logicList[relyOp] == "> ")
+            {
+                if (db[j][getColNum(q.whereLeft[relyOp], db)] > q.whereRight[relyOp])
+                {
+                    p = true;
+                }
+            }
+            if (q.logicList[relyOp] == "< ")
+            {
+                if (db[j][getColNum(q.whereLeft[relyOp], db)] < q.whereRight[relyOp])
+                {
+                    p = true;
+                }
+            }
+            if (q.logicList[relyOp] == "==")
+            {
+                if (db[j][getColNum(q.whereLeft[relyOp], db)] == q.whereRight[relyOp])
+                {
+                    p = true;
+                }
+            }
+            if (q.logicList[relyOp] == "!=")
+            {
+                if (db[j][getColNum(q.whereLeft[relyOp], db)] != q.whereRight[relyOp])
+                {
+                    p = true;
+                }
+            }
+            if (q.logicList[relyOp] == ">=")
+            {
+                if (db[j][getColNum(q.whereLeft[relyOp], db)] >= q.whereRight[relyOp])
+                {
+                    p = true;
+                }
+            }
+            if (q.logicList[relyOp] == "<=")
+            {
+                if (db[j][getColNum(q.whereLeft[relyOp], db)] <= q.whereRight[relyOp])
+                {
+                    p = true;
+                }
+            }
+
+            if (q.ANDORlist[relyOp] == "and")
+            {
+                if (p2 && p)
+                {
+                    output[relyOp][j] = db[j][getColNum(q.colList[i], db)];
+                    relyOp++;
+                }
+            }
+            else if (q.ANDORlist[relyOp] == "or")
+            {
+                if (p2 || p)
+                {
+                    output[relyOp][j] = db[j][getColNum(q.colList[i], db)];
+                    relyOp++;
+                }
+            }
+            else if (q.whereCount == 1 && p == true)
+            {
+                // cout << "i: " << i << endl;
+                // cout << "relyOp: " << relyOp << endl;
+                // cout << "j: " << j << endl;
+                // cout << "left of i: " << q.whereLeft[relyOp] << endl;
+                // cout << "col of left: " << getColNum(q.whereLeft[relyOp], db) << endl;
+
+                // cout << output[i][j] << endl;
+                output[j][i] = db[j][getColNum(q.colList[i], db)];
+                rowcount++;
+            }
+            p2 = p;
+            p = false;
+        }
+    }
+
+    ofstream outfile;
+    outfile.open("queryoutput.txt", ofstream::app);
+    outfile << "Query:" << endl;
+    for (int i = 0; i < q.colCount; i++)
+    {
+        outfile << q.colList[i] << '\t';
+    }
+    outfile << '\n';
+    for (int i = 0; i < ARSIZE; i++)
+    {
+        for (int j = 0; j < COLMAX; j++)
+        {
+            if (output[i][j] != "")
+            {
+                outfile << output[i][j] << '\t';
+            }
+        }
+        if (output[i][0] != "")
+        {
+            outfile << '\n';
+        }
+    }
+    outfile << "Total Rows: " << rowcount / 2 << endl;
+    outfile.close();
+    return 1;
+}
 
 void runQuery(string &query, string db[][COLMAX])
 {

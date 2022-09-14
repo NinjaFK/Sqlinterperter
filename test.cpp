@@ -80,6 +80,8 @@ void readArray(string raw[ARSIZE][COLMAX])
 string lower(string str)
 {
     int i = 0;
+    // while the character is not \0
+    // which denotes end of strings then lowers it
     while (str[i] != '\0')
     {
         str[i] = tolower(str[i]);
