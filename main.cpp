@@ -46,6 +46,8 @@ void readData(string raw[ARSIZE][COLMAX])
             getline(ss, partLine, '\t');
             raw[i][j] = partLine;
         }
+        // gets new line from file
+        //  and puts the new line for string stream
         getline(infile, line);
         ss.str(line);
     }
@@ -59,6 +61,7 @@ void writeData(string raw[ARSIZE][COLMAX])
     // create output.txt and add all strings from input array
     ofstream infile("output.txt");
     string str = "";
+    // nested for loop to go through
     for (int i = 0; i < ARSIZE; i++)
     {
         for (int j = 0; j < COLMAX; j++)
@@ -88,16 +91,20 @@ string lower(string str)
 // makes our life easier
 int getColNum(string q, string raw[ARSIZE][COLMAX])
 {
+    // lower cols and and goes through for loop
     int count = 0;
     q = lower(q);
     for (int i = 0; i < COLMAX; i++)
     {
+        // checks if a array value is the string
+        // it would return count if it ever was
         if (lower(raw[0][i]) == q)
         {
             return count;
         }
         count++;
     }
+    // return -1 to show not a vaild col
     return -1;
 }
 
@@ -108,12 +115,16 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 {
     int j = 0;
     string temp = "";
+    // takes first six letters and comparing it
     if (q.substr(0, 6) != "select")
     {
         return 1;
     }
     q.erase(0, 7);
 
+    // removes cols if there is not a star
+    // this is bc if it has a star we dont
+    // need to remove cols bc there is none
     if (q[0] != '*')
     {
         for (int i = 0; i < 36; i++)
@@ -133,6 +144,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         }
         q.erase(0, q.find("\" f") + 2);
     }
+    // checks the constant part of query
     if (q.substr(0, 4) != "from")
     {
         return 1;
@@ -153,14 +165,17 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
     }
     q.erase(0, 7);
 
+    // using a do while loop to do it atleast one time
     do
     {
-        if (getColNum(q.substr(0, q.find("\" ")), db) == -1)
-        {
-            return 1;
-        }
+        // checking if col is a vaild
+        // if (getColNum(q.substr(0, q.find("\" ")), db) == -1)
+        //{
+        //    return 1;
+        //}
         q.erase(0, q.find("\" ") + 1);
         temp = q.substr(1, 2);
+        // checks relational operators
         if (temp != "> " && temp != "< ")
         {
             if (temp != "==" && temp != "!=")
@@ -172,6 +187,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
             }
         }
         q.erase(0, q.find(" \"") + 2);
+        // checks if there are any "and" or  "or" left if not break
         if (q.find("and") == string::npos && q.find("or") == string::npos)
         {
             break;
@@ -180,6 +196,7 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
         j++;
     } while (j < 4);
 
+    // checks if extra or broken quotes on the end of string
     if (q.length() == 0)
     {
         return 1;
@@ -201,17 +218,19 @@ void parseQuerytoStruct(Query &q, string query, string db[ARSIZE][COLMAX])
     string lq = lower(query);
     long maxstr = string::npos;
 
-    // redo please without db
-
     query.erase(0, 8);
 
+    // for loop of each col to insert to struct
     for (int i = 0; i < 37; i++)
     {
+        // checks if there is a star
+        //  if there is put all cols from db into it
         if (query.find('*') != string::npos)
         {
             q.colList[i] = db[0][i];
             q.colCount = 37;
         }
+        // check if there are extra cols to print
         if (query.find(", \"") != string::npos)
         {
             q.colList[numOfCol] = query.substr(0, query.find("\","));
@@ -223,6 +242,7 @@ void parseQuerytoStruct(Query &q, string query, string db[ARSIZE][COLMAX])
     q.colList[numOfCol] = query.substr(0, query.find("\""));
     q.colCount++;
 
+    // sees if there are conditionals at all
     if (lq.find("where") != maxstr)
     {
         q.whereCount++;
@@ -268,6 +288,7 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
     int relyOp = 0;
     bool p, p2 = false;
     int rowcount = 0;
+    // i check if all cols are vaild first
     for (int i = 0; i < q.colCount; i++)
     {
         if (getColNum(q.colList[i], db) != -1)
@@ -275,15 +296,22 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
             colc++;
         }
     }
+    // this checks if are num of vaild cols are
+    // the same as colcount(the amount added in parse)
     if (colc != q.colCount)
     {
         return 0;
     }
 
+    // i choose to go through the collist
+    // and go through the down the rows checking
+    // because it is more efficient than checking
+    // all parts of the 2d array
     for (int i = 0; i < q.colCount; i++)
     {
         for (int j = 0; j < ARSIZE; j++)
         {
+            // checks what operator is being used and uses it
             if (q.logicList[relyOp] == "> ")
             {
                 if (db[j][getColNum(q.whereLeft[relyOp], db)] > q.whereRight[relyOp])
@@ -327,6 +355,7 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
                 }
             }
 
+            // prob doesnt work tbh
             if (q.ANDORlist[relyOp] == "and")
             {
                 if (p2 && p)
@@ -355,19 +384,24 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
                 output[j][i] = db[j][getColNum(q.colList[i], db)];
                 rowcount++;
             }
+            // this is for checking "and" and "or"
             p2 = p;
             p = false;
         }
     }
 
+    // print to the file
     ofstream outfile;
     outfile.open("queryoutput.txt", ofstream::app);
     outfile << "Query:" << endl;
+    // prints the top cols
     for (int i = 0; i < q.colCount; i++)
     {
         outfile << q.colList[i] << '\t';
     }
     outfile << '\n';
+    // going through the 2d array and only
+    // printing when there is a vaule there
     for (int i = 0; i < ARSIZE; i++)
     {
         for (int j = 0; j < COLMAX; j++)
