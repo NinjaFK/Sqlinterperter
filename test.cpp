@@ -156,10 +156,10 @@ bool checkSyntax(string q, string db[ARSIZE][COLMAX])
 
     do
     {
-        if (getColNum(q.substr(0, q.find("\" ")), db) == -1)
-        {
-            return 1;
-        }
+        // if (getColNum(q.substr(0, q.find("\" ")), db) == -1)
+        //{
+        //     return 1;
+        // }
         q.erase(0, q.find("\" ") + 1);
         temp = q.substr(1, 2);
         if (temp != "> " && temp != "< ")
@@ -266,6 +266,7 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
     // output[j][k] = db[0][getColNum(q.colList[i], db)];
     int colc = 0;
     int relyOp = 0;
+    int wherec = 0;
     bool p, p2 = false;
     int rowcount = 0;
     for (int i = 0; i < q.colCount; i++)
@@ -275,7 +276,19 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
             colc++;
         }
     }
+    for (int i = 0; i < q.whereCount; i++)
+    {
+        if (getColNum(q.whereLeft[i], db) != -1)
+        {
+            wherec++;
+        }
+    }
+
     if (colc != q.colCount)
+    {
+        return 0;
+    }
+    if (wherec != q.whereCount)
     {
         return 0;
     }
@@ -438,9 +451,9 @@ void runQuery(string &query, string db[][COLMAX])
     Query q; // the struct with the data to query
 
     parseQuerytoStruct(q, query, db); // remember to handle separately *
-    // printQuery(q);
-    //        now we can actually return the values for it.
-    //    generateResults(q, db);
+                                      // printQuery(q);
+    //         now we can actually return the values for it.
+    //     generateResults(q, db);
     if (!generateResults(q, db))
         cout << "Error: Invalid Query Semantic. "
              << "Get motivated. Try Again!" << endl;
@@ -459,8 +472,9 @@ int main()
     ofstream fout;
     fout.open("queryoutput.txt"); // Cleanup
     fout << "Queries:" << endl;
-    fout.close();                                                                                                                                       // Cleanup output file
-    query = "SELECT \"Country of Operator/Owner\", \"Current Official Name of Satellite\" FROM DB WHERE \"Country/Org of UN Registry\" == \"Mexico\";"; // Debug
+    fout.close();                                                                                                                                                                         // Cleanup output file
+    query = "SELECT \"Current Official Name of Satellite\", \"Class of Orbit\", \"Launch Mass (kg.)\" FROM DB WHERE \"Launch Mass (kg.)\" >= \"7,000\" OR \"Dry Mass (kg.)\" <= \"30\";"; // Debug
+    //       SELECT \"Current Official Name of Satellite\", \"Class of Orbit\", \"Launch Mass (kg.)\" FROM DB WHERE \"Launch Mass (kg.)\" >= \"7,000\" OR \"Dry Mass (kg.)\" <= \"30\";
     runQuery(query, rawData);
     return 0; // Debug
     /*

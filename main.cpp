@@ -286,9 +286,9 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
     // output[j][k] = db[0][getColNum(q.colList[i], db)];
     int colc = 0;
     int relyOp = 0;
+    int wherec = 0;
     bool p, p2 = false;
     int rowcount = 0;
-    // i check if all cols are vaild first
     for (int i = 0; i < q.colCount; i++)
     {
         if (getColNum(q.colList[i], db) != -1)
@@ -296,9 +296,19 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
             colc++;
         }
     }
-    // this checks if are num of vaild cols are
-    // the same as colcount(the amount added in parse)
+    for (int i = 0; i < q.whereCount; i++)
+    {
+        if (getColNum(q.whereLeft[i], db) != -1)
+        {
+            wherec++;
+        }
+    }
+
     if (colc != q.colCount)
+    {
+        return 0;
+    }
+    if (wherec != q.whereCount)
     {
         return 0;
     }
