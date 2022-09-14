@@ -416,7 +416,7 @@ int main()
     string rawData[ARSIZE][COLMAX]; // first row has col names
     readData(rawData);
     writeData(rawData); // output.txt
-    cout << "Welcome to the Satellite Database at home" << endl;
+    cout << "   Welcome to the Satellite Database at home" << endl;
     string query = "";
     for (int i = 0; i < ARSIZE; i++) // Clean up output global array
         for (int j = 0; j < COLMAX; j++)
@@ -429,7 +429,7 @@ int main()
     // runQuery(query, rawData); return 0;//Debug
     while (query != "q")
     {
-        cout << "Please enter your query:" << endl;
+        cout << "   Please enter your query:" << endl;
         getline(cin, query);
         runQuery(query, rawData); // pass by ref
     }
