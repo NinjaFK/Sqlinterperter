@@ -396,7 +396,7 @@ void runQuery(string &query, string db[][COLMAX])
     } // Exit command so we are done here.
     if (checkSyntax(lower(query), db))
     { // lowercase version so it's ez
-        cout << "Error: Invalid Query Syntax. "
+        cout << "   Error: Invalid Query Syntax. "
              << "Get motivated. Try Again!" << endl;
         return; // if true there is syntax error
     }
