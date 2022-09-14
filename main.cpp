@@ -1,3 +1,10 @@
+/*
+    Name: Brian, 5008139573, 1005, 1
+    Description: Sql interpeter
+    Input: Sql query
+    Output: Table of requested sql queries
+*/
+
 #include <iostream>
 #include <string>
 #include <fstream>
