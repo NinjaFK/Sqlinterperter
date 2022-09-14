@@ -219,7 +219,6 @@ void parseQuerytoStruct(Query &q, string query, string db[ARSIZE][COLMAX])
         }
     }
     q.colList[numOfCol] = query.substr(0, query.find("\""));
-    query.erase(0, query.find("\" f") + 2);
     q.colCount++;
 
     if (lq.find("where") != maxstr)
@@ -265,7 +264,7 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
     // output[j][k] = db[0][getColNum(q.colList[i], db)];
     int colc = 0;
     int relyOp = 0;
-    bool p;
+    bool p, p2;
     for (int i = 0; i < q.colCount; i++)
     {
         if (getColNum(q.colList[i], db) != -1)
@@ -302,7 +301,6 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
                 if (db[j][getColNum(q.whereLeft[i], db)] == q.whereRight[i])
                 {
                     p = true;
-                    cout << "yoooooo" << endl;
                 }
             }
             if (q.logicList[relyOp] == "!=")
@@ -327,19 +325,44 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
                 }
             }
 
-            /*
-            cout << "i: " << i << endl;
-            cout << "j: " << j << endl;
-            cout << q.colList[i] << endl;
-            cout << getColNum(q.whereLeft[i], db) << endl;
-            cout << db[j][getColNum(q.whereLeft[i], db)] << endl;
-            cout << q.whereRight[i] << endl;
-            cout << output[j][1] << endl;
-            */
-        }
-    }
+            p2 = p;
+            p = false;
 
-    return 0;
+            if (q.ANDORlist[i] == "and")
+            {
+                if (p2 && p)
+                {
+                    output[i][j] == db[j][getColNum(q.whereLeft[i], db)];
+                }
+            }
+            else if (q.ANDORlist[i] == "or")
+            {
+                if (p2 || p)
+                {
+                    output[i][j] == db[j][getColNum(q.whereLeft[i], db)];
+                }
+            }
+            else if ((q.whereCount == 1) && (p = true))
+            {
+                output[i][j] == db[j][getColNum(q.whereLeft[i], db)];
+                cout << output[i][j] << endl;
+            }
+        }
+
+        ofstream outfile;
+        outfile.open("queryoutput.txt");
+        outfile << "Queries:" << endl;
+        for (int i = 0; i < ARSIZE; i++)
+        {
+            for (int j = 0; j < COLMAX; j++)
+            {
+                outfile << output[i][j] << '\t';
+            }
+            outfile << '\n';
+        }
+        outfile.close();
+    }
+    return 1;
 }
 
 void printQuery(Query q)
