@@ -228,7 +228,7 @@ void parseQuerytoStruct(Query &q, string query, string db[ARSIZE][COLMAX])
         query.erase(0, lq.find("where") + 7);
         for (int i = 0; i < 4; i++)
         {
-            if (lq.find("and") != maxstr || lq.find("or") != maxstr)
+            if (lq.find("\" and \"") != maxstr || lq.find("\" or \"") != maxstr)
             {
                 q.whereLeft[i] = query.substr(0, query.find("\" "));
                 query.erase(0, query.find("\" ") + 2);
@@ -264,7 +264,8 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
     // output[j][k] = db[0][getColNum(q.colList[i], db)];
     int colc = 0;
     int relyOp = 0;
-    bool p, p2;
+    bool p, p2 = false;
+    int rowcount = 0;
     for (int i = 0; i < q.colCount; i++)
     {
         if (getColNum(q.colList[i], db) != -1)
@@ -277,91 +278,110 @@ bool generateResults(Query q, string db[ARSIZE][COLMAX])
         return 0;
     }
 
-    for (int i = 0; i < colc; i++)
+    for (int i = 0; i < q.colCount; i++)
     {
         for (int j = 0; j < ARSIZE; j++)
         {
-
             if (q.logicList[relyOp] == "> ")
             {
-                if (db[j][getColNum(q.whereLeft[i], db)] > q.whereRight[i])
+                if (db[j][getColNum(q.whereLeft[relyOp], db)] > q.whereRight[relyOp])
                 {
                     p = true;
                 }
             }
             if (q.logicList[relyOp] == "< ")
             {
-                if (db[j][getColNum(q.whereLeft[i], db)] < q.whereRight[i])
+                if (db[j][getColNum(q.whereLeft[relyOp], db)] < q.whereRight[relyOp])
                 {
                     p = true;
                 }
             }
             if (q.logicList[relyOp] == "==")
             {
-                if (db[j][getColNum(q.whereLeft[i], db)] == q.whereRight[i])
+                if (db[j][getColNum(q.whereLeft[relyOp], db)] == q.whereRight[relyOp])
                 {
                     p = true;
                 }
             }
             if (q.logicList[relyOp] == "!=")
             {
-                if (db[j][getColNum(q.whereLeft[i], db)] != q.whereRight[i])
+                if (db[j][getColNum(q.whereLeft[relyOp], db)] != q.whereRight[relyOp])
                 {
                     p = true;
                 }
             }
             if (q.logicList[relyOp] == ">=")
             {
-                if (db[j][getColNum(q.whereLeft[i], db)] >= q.whereRight[i])
+                if (db[j][getColNum(q.whereLeft[relyOp], db)] >= q.whereRight[relyOp])
                 {
                     p = true;
                 }
             }
             if (q.logicList[relyOp] == "<=")
             {
-                if (db[j][getColNum(q.whereLeft[i], db)] <= q.whereRight[i])
+                if (db[j][getColNum(q.whereLeft[relyOp], db)] <= q.whereRight[relyOp])
                 {
                     p = true;
                 }
             }
 
-            p2 = p;
-            p = false;
-
-            if (q.ANDORlist[i] == "and")
+            if (q.ANDORlist[relyOp] == "and")
             {
                 if (p2 && p)
                 {
-                    output[i][j] == db[j][getColNum(q.whereLeft[i], db)];
+                    output[relyOp][j] = db[j][getColNum(q.colList[i], db)];
+                    relyOp++;
                 }
             }
-            else if (q.ANDORlist[i] == "or")
+            else if (q.ANDORlist[relyOp] == "or")
             {
                 if (p2 || p)
                 {
-                    output[i][j] == db[j][getColNum(q.whereLeft[i], db)];
+                    output[relyOp][j] = db[j][getColNum(q.colList[i], db)];
+                    relyOp++;
                 }
             }
-            else if ((q.whereCount == 1) && (p = true))
+            else if (q.whereCount == 1 && p == true)
             {
-                output[i][j] == db[j][getColNum(q.whereLeft[i], db)];
-                cout << output[i][j] << endl;
-            }
-        }
+                // cout << "i: " << i << endl;
+                // cout << "relyOp: " << relyOp << endl;
+                // cout << "j: " << j << endl;
+                // cout << "left of i: " << q.whereLeft[relyOp] << endl;
+                // cout << "col of left: " << getColNum(q.whereLeft[relyOp], db) << endl;
 
-        ofstream outfile;
-        outfile.open("queryoutput.txt");
-        outfile << "Queries:" << endl;
-        for (int i = 0; i < ARSIZE; i++)
+                // cout << output[i][j] << endl;
+                output[j][i] = db[j][getColNum(q.colList[i], db)];
+                rowcount++;
+            }
+            p2 = p;
+            p = false;
+        }
+    }
+
+    ofstream outfile;
+    outfile.open("queryoutput.txt", ofstream::app);
+    outfile << "Query:" << endl;
+    for (int i = 0; i < q.colCount; i++)
+    {
+        outfile << q.colList[i] << '\t';
+    }
+    outfile << '\n';
+    for (int i = 0; i < ARSIZE; i++)
+    {
+        for (int j = 0; j < COLMAX; j++)
         {
-            for (int j = 0; j < COLMAX; j++)
+            if (output[i][j] != "")
             {
                 outfile << output[i][j] << '\t';
             }
+        }
+        if (output[i][0] != "")
+        {
             outfile << '\n';
         }
-        outfile.close();
     }
+    outfile << "Total Rows: " << rowcount / 2 << endl;
+    outfile.close();
     return 1;
 }
 
@@ -391,11 +411,11 @@ void printQuery(Query q)
         cout << q.logicList[i] << endl;
     }
     cout << "-----------" << endl;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < q.whereCount; i++)
     {
-        cout << q.ANDORlist[i] << endl;
+        cout << "andor:" << q.ANDORlist[i] << endl;
     }
-    cout << endl;
+    cout << "-----------" << endl;
 }
 
 void runQuery(string &query, string db[][COLMAX])
@@ -416,9 +436,9 @@ void runQuery(string &query, string db[][COLMAX])
     Query q; // the struct with the data to query
 
     parseQuerytoStruct(q, query, db); // remember to handle separately *
-                                      // printQuery(q);
-    //      now we can actually return the values for it.
-    //  generateResults(q, db);
+    // printQuery(q);
+    //        now we can actually return the values for it.
+    //    generateResults(q, db);
     if (!generateResults(q, db))
         cout << "Error: Invalid Query Semantic. "
              << "Get motivated. Try Again!" << endl;
@@ -437,8 +457,8 @@ int main()
     ofstream fout;
     fout.open("queryoutput.txt"); // Cleanup
     fout << "Queries:" << endl;
-    fout.close();                                                                                                 // Cleanup output file
-    query = "SELECT \"\"Name of Satellite, Alternate Names\"\", \"Users\" FROM DB WHERE \"Users\" == \"Civil\";"; // Debug
+    fout.close();                                                                                                                                       // Cleanup output file
+    query = "SELECT \"Country of Operator/Owner\", \"Current Official Name of Satellite\" FROM DB WHERE \"Country/Org of UN Registry\" == \"Mexico\";"; // Debug
     runQuery(query, rawData);
     return 0; // Debug
     /*
