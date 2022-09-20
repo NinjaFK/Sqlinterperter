@@ -1,1 +1,10 @@
 Queries:
+Query:
+Country of Operator/Owner	Current Official Name of Satellite	
+Multinational	Eutelsat 113 West A	
+Multinational	Eutelsat 117 West A	
+Multinational	Eutelsat 117 West B	
+Mexico	Mexsat-3	
+Mexico	Mexsat-3	
+Mexico	Painani-1	
+Total Rows: 6

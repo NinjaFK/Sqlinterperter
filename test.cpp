@@ -452,6 +452,7 @@ void runQuery(string &query, string db[][COLMAX])
 
     parseQuerytoStruct(q, query, db); // remember to handle separately *
                                       // printQuery(q);
+    printQuery(q);
     //         now we can actually return the values for it.
     //     generateResults(q, db);
     if (!generateResults(q, db))
@@ -472,8 +473,8 @@ int main()
     ofstream fout;
     fout.open("queryoutput.txt"); // Cleanup
     fout << "Queries:" << endl;
-    fout.close();                                                                                                                                                                         // Cleanup output file
-    query = "SELECT \"Current Official Name of Satellite\", \"Class of Orbit\", \"Launch Mass (kg.)\" FROM DB WHERE \"Launch Mass (kg.)\" >= \"7,000\" OR \"Dry Mass (kg.)\" <= \"30\";"; // Debug
+    fout.close();                                                                                                                                       // Cleanup output file
+    query = "SELECT \"Country of Operator/Owner\", \"Current Official Name of Satellite\" FROM DB WHERE \"Country/Org of UN Registry\" == \"Mexico\";"; // Debug
     //       SELECT \"Current Official Name of Satellite\", \"Class of Orbit\", \"Launch Mass (kg.)\" FROM DB WHERE \"Launch Mass (kg.)\" >= \"7,000\" OR \"Dry Mass (kg.)\" <= \"30\";
     runQuery(query, rawData);
     return 0; // Debug
